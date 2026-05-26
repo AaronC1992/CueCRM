@@ -24,6 +24,10 @@ export async function GET(req: NextRequest) {
     const industry = searchParams.get('industry') || '';
     const sort = searchParams.get('sort') || 'createdDate';
     const dir = searchParams.get('dir') === 'asc' ? 'ASC' : 'DESC';
+    const requestedLimit = Number(searchParams.get('limit'));
+    const limit = Number.isFinite(requestedLimit)
+      ? Math.min(Math.max(Math.trunc(requestedLimit), 1), 5000)
+      : 250;
 
     const sortMap: Record<string, string> = {
       businessName: 'business_name', contactName: 'contact_name',
@@ -45,7 +49,7 @@ export async function GET(req: NextRequest) {
       ${state ? sql`AND state ILIKE ${`%${state}%`}` : sql``}
       ${industry ? sql`AND industry = ${industry}` : sql``}
       ORDER BY ${sql.unsafe(safeSort)} ${sql.unsafe(dir)}
-      LIMIT 2000
+      LIMIT ${limit}
     `;
     return NextResponse.json((rows as Record<string, unknown>[]).map(parseLead));
   } catch (err) {

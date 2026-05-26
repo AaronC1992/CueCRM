@@ -4,7 +4,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import Modal from '@/components/ui/Modal';
 import { showToast } from '@/components/ui/Toast';
 import { Demo, DemoStatus, Template } from '@/lib/types';
-import { formatDate, fillTemplate } from '@/lib/utils';
+import { fetchWithTimeout, formatDate, fillTemplate } from '@/lib/utils';
 import { Plus, Edit3, Trash2, ExternalLink, Search, Copy } from 'lucide-react';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 
@@ -54,13 +54,21 @@ export default function DemosPage() {
 
   const fetchDemos = useCallback(async () => {
     const params = filterStatus ? `?status=${encodeURIComponent(filterStatus)}` : '';
-    const [demoRes, tmplRes] = await Promise.all([
-      fetch(`/api/demos${params}`),
-      fetch('/api/templates'),
-    ]);
-    if (demoRes.ok) setDemos(await demoRes.json());
-    if (tmplRes.ok) setTemplates(await tmplRes.json());
-    setLoading(false);
+    try {
+      const [demoRes, tmplRes] = await Promise.all([
+        fetchWithTimeout(`/api/demos${params}`, { timeoutMs: 15000 }),
+        fetchWithTimeout('/api/templates', { timeoutMs: 15000 }),
+      ]);
+      if (demoRes.ok) setDemos(await demoRes.json());
+      else setDemos([]);
+      if (tmplRes.ok) setTemplates(await tmplRes.json());
+      else setTemplates([]);
+    } catch {
+      setDemos([]);
+      setTemplates([]);
+    } finally {
+      setLoading(false);
+    }
   }, [filterStatus]);
 
   useEffect(() => { fetchDemos(); }, [fetchDemos]);

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { StatusBadge, PriorityBadge } from '@/components/ui/Badge';
 import { DashboardStats, Lead, Activity } from '@/lib/types';
-import { formatDate, formatDateTime, formatCurrency } from '@/lib/utils';
+import { fetchWithTimeout, formatDate, formatDateTime, formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
 import {
   Users, TrendingUp, Star, AlertCircle, CheckCircle2,
@@ -33,7 +33,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/dashboard')
+    fetchWithTimeout('/api/dashboard', { timeoutMs: 15000 })
       .then(r => r.ok ? r.json() : Promise.reject(new Error(`API ${r.status}`)))
       .then(data => { setStats(data); setLoading(false); })
       .catch(() => setLoading(false));

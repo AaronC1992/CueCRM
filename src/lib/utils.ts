@@ -5,6 +5,33 @@ export function cn(...inputs: (string | undefined | null | boolean)[]): string {
   return inputs.filter(Boolean).join(' ');
 }
 
+export async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit & { timeoutMs?: number } = {},
+): Promise<Response> {
+  const { timeoutMs = 12000, ...requestInit } = init;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  if (requestInit.signal) {
+    if (requestInit.signal.aborted) {
+      controller.abort();
+    } else {
+      requestInit.signal.addEventListener('abort', () => controller.abort(), { once: true });
+    }
+  }
+
+  try {
+    return await fetch(input, { ...requestInit, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export function isAbortError(err: unknown): boolean {
+  return typeof err === 'object' && err !== null && 'name' in err && (err as { name?: string }).name === 'AbortError';
+}
+
 // ─── Status Colors ─────────────────────────────────────────────────────────────
 
 export const STATUS_COLORS: Record<LeadStatus, string> = {

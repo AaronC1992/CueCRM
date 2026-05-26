@@ -4,7 +4,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import Modal from '@/components/ui/Modal';
 import { showToast } from '@/components/ui/Toast';
 import { Deal, DealStage, ContractStatus, PaymentStatus } from '@/lib/types';
-import { formatDate, formatCurrency } from '@/lib/utils';
+import { fetchWithTimeout, formatDate, formatCurrency } from '@/lib/utils';
 import { Plus, Edit3, Trash2, DollarSign } from 'lucide-react';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 
@@ -33,9 +33,15 @@ export default function DealsPage() {
 
   const fetchDeals = useCallback(async () => {
     const params = filterStage ? `?stage=${encodeURIComponent(filterStage)}` : '';
-    const res = await fetch(`/api/deals${params}`);
-    if (res.ok) setDeals(await res.json());
-    setLoading(false);
+    try {
+      const res = await fetchWithTimeout(`/api/deals${params}`, { timeoutMs: 15000 });
+      if (res.ok) setDeals(await res.json());
+      else setDeals([]);
+    } catch {
+      setDeals([]);
+    } finally {
+      setLoading(false);
+    }
   }, [filterStage]);
 
   useEffect(() => { fetchDeals(); }, [fetchDeals]);

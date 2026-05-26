@@ -6,7 +6,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import Modal from '@/components/ui/Modal';
 import { showToast } from '@/components/ui/Toast';
 import { Task, TaskType } from '@/lib/types';
-import { formatDate, isOverdue, isDueToday } from '@/lib/utils';
+import { fetchWithTimeout, formatDate, isOverdue, isDueToday } from '@/lib/utils';
 import { Plus, Edit3, Trash2, CheckCircle, Circle, AlertCircle, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import Link from 'next/link';
@@ -48,16 +48,27 @@ function TasksPageInner() {
 
   const fetchTasks = useCallback(async () => {
     const params = filterStatus ? `?status=${filterStatus}` : '';
-    const res = await fetch(`/api/tasks${params}`);
-    if (res.ok) setTasks(await res.json());
-    setLoading(false);
+    try {
+      const res = await fetchWithTimeout(`/api/tasks${params}`, { timeoutMs: 15000 });
+      if (res.ok) setTasks(await res.json());
+      else setTasks([]);
+    } catch {
+      setTasks([]);
+    } finally {
+      setLoading(false);
+    }
   }, [filterStatus]);
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
   const fetchAllTasks = useCallback(async () => {
-    const res = await fetch('/api/tasks');
-    if (res.ok) setCalendarTasks(await res.json());
+    try {
+      const res = await fetchWithTimeout('/api/tasks', { timeoutMs: 15000 });
+      if (res.ok) setCalendarTasks(await res.json());
+      else setCalendarTasks([]);
+    } catch {
+      setCalendarTasks([]);
+    }
   }, []);
 
   useEffect(() => {

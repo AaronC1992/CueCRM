@@ -4,7 +4,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import Modal from '@/components/ui/Modal';
 import { showToast } from '@/components/ui/Toast';
 import { Package } from '@/lib/types';
-import { formatCurrency } from '@/lib/utils';
+import { fetchWithTimeout, formatCurrency } from '@/lib/utils';
 import { Plus, Edit3, Trash2, Check } from 'lucide-react';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 
@@ -24,9 +24,15 @@ export default function PackagesPage() {
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
   const fetchPackages = useCallback(async () => {
-    const res = await fetch('/api/packages');
-    if (res.ok) setPackages(await res.json());
-    setLoading(false);
+    try {
+      const res = await fetchWithTimeout('/api/packages', { timeoutMs: 15000 });
+      if (res.ok) setPackages(await res.json());
+      else setPackages([]);
+    } catch {
+      setPackages([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { fetchPackages(); }, [fetchPackages]);

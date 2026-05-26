@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { StatusBadge, PriorityBadge } from '@/components/ui/Badge';
 import { Lead } from '@/lib/types';
-import { formatDate, formatCurrency, LEAD_STATUSES, PRIORITIES, INDUSTRIES } from '@/lib/utils';
+import { fetchWithTimeout, formatDate, formatCurrency, LEAD_STATUSES, PRIORITIES, INDUSTRIES } from '@/lib/utils';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
@@ -100,7 +100,7 @@ function LeadsContent() {
     params.set('sort', sort);
     params.set('dir', dir);
     try {
-      const res = await fetch(`/api/leads?${params}`);
+      const res = await fetchWithTimeout(`/api/leads?${params}`, { timeoutMs: 15000 });
       const data = await res.json();
       const arr = Array.isArray(data) ? data : [];
       setLeads(arr);

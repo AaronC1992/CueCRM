@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { showToast } from '@/components/ui/Toast';
+import { fetchWithTimeout } from '@/lib/utils';
 import { Save } from 'lucide-react';
 
 const SETTINGS_FIELDS = [
@@ -27,10 +28,17 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch('/api/settings').then(r => r.json()).then(data => {
-      setSettings(data);
-      setLoading(false);
-    });
+    fetchWithTimeout('/api/settings', { timeoutMs: 15000 })
+      .then(r => r.ok ? r.json() : Promise.reject(new Error(`API ${r.status}`)))
+      .then(data => {
+        setSettings(data);
+      })
+      .catch(() => {
+        setSettings({});
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   const set = (key: string, value: string) => setSettings(prev => ({ ...prev, [key]: value }));
