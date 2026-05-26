@@ -4,7 +4,6 @@ import AppLayout from '@/components/layout/AppLayout';
 import Modal from '@/components/ui/Modal';
 import { showToast } from '@/components/ui/Toast';
 import { Template, TemplateType } from '@/lib/types';
-import { fetchWithTimeout } from '@/lib/utils';
 import { Plus, Edit3, Trash2, Copy, Info } from 'lucide-react';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 
@@ -57,15 +56,9 @@ export default function OutreachPage() {
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
   const fetchTemplates = useCallback(async () => {
-    try {
-      const res = await fetchWithTimeout('/api/templates', { timeoutMs: 15000 });
-      if (res.ok) setTemplates(await res.json());
-      else setTemplates([]);
-    } catch {
-      setTemplates([]);
-    } finally {
-      setLoading(false);
-    }
+    const res = await fetch('/api/templates');
+    if (res.ok) setTemplates(await res.json());
+    setLoading(false);
   }, []);
 
   useEffect(() => { fetchTemplates(); }, [fetchTemplates]);

@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { showToast } from '@/components/ui/Toast';
 import { Lead } from '@/lib/types';
-import { fetchWithTimeout, formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import Link from 'next/link';
 import ColumnEditor, { ColDef, ColState, mergeColState } from '@/components/ui/ColumnEditor';
 import {
@@ -65,15 +65,9 @@ export default function CustomersPage() {
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
-    try {
-      const res = await fetchWithTimeout('/api/leads?status=Won&dir=desc&sort=updatedDate&limit=1000', { timeoutMs: 15000 });
-      if (res.ok) setCustomers(await res.json());
-      else setCustomers([]);
-    } catch {
-      setCustomers([]);
-    } finally {
-      setLoading(false);
-    }
+    const res = await fetch('/api/leads?status=Won&dir=desc&sort=updatedDate');
+    if (res.ok) setCustomers(await res.json());
+    setLoading(false);
   }, []);
 
   useEffect(() => { fetchCustomers(); }, [fetchCustomers]);

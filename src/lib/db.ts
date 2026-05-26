@@ -9,7 +9,7 @@ function getDb() {
   if (!_sql) {
     _sql = postgres(process.env.DATABASE_URL!, {
       ssl: 'require',
-      max: 5,
+      max: 1,
       idle_timeout: 60,
       max_lifetime: 300,
       connect_timeout: 10,
