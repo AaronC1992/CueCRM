@@ -34,6 +34,9 @@ export default function TasksPage() {
 
 function TasksPageInner() {
   const searchParams = useSearchParams();
+  const scopedLeadIdParam = searchParams.get('leadId');
+  const scopedLeadId = scopedLeadIdParam ? Number(scopedLeadIdParam) : null;
+  const hasScopedLead = Number.isFinite(scopedLeadId);
   const [tasks, setTasks] = useState<(Task & { leadName?: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<'pending' | 'in_progress' | 'completed' | ''>('pending');
@@ -47,18 +50,22 @@ function TasksPageInner() {
   const [calendarTasks, setCalendarTasks] = useState<(Task & { leadName?: string })[]>([]);
 
   const fetchTasks = useCallback(async () => {
-    const params = filterStatus ? `?status=${filterStatus}` : '';
+    const qs = new URLSearchParams();
+    if (filterStatus) qs.set('status', filterStatus);
+    if (hasScopedLead && scopedLeadId != null) qs.set('leadId', String(scopedLeadId));
+    const params = qs.toString() ? `?${qs.toString()}` : '';
     const res = await fetch(`/api/tasks${params}`);
     if (res.ok) setTasks(await res.json());
     setLoading(false);
-  }, [filterStatus]);
+  }, [filterStatus, hasScopedLead, scopedLeadId]);
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
   const fetchAllTasks = useCallback(async () => {
-    const res = await fetch('/api/tasks');
+    const params = hasScopedLead && scopedLeadId != null ? `?leadId=${scopedLeadId}` : '';
+    const res = await fetch(`/api/tasks${params}`);
     if (res.ok) setCalendarTasks(await res.json());
-  }, []);
+  }, [hasScopedLead, scopedLeadId]);
 
   useEffect(() => {
     if (viewMode === 'calendar') fetchAllTasks();
@@ -161,6 +168,17 @@ function TasksPageInner() {
           </button>
         </div>
 
+        {hasScopedLead && (
+          <div className="flex flex-wrap items-center gap-2 text-sm bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+            <span className="text-blue-800">
+              Showing only tasks for {tasks[0]?.leadName || `Lead #${scopedLeadId}`}
+            </span>
+            <Link href="/tasks" className="text-blue-700 font-medium hover:underline">
+              View all tasks
+            </Link>
+          </div>
+        )}
+
         {loading && <div className="flex justify-center py-12"><div className="animate-spin w-7 h-7 border-2 border-blue-500 border-t-transparent rounded-full" /></div>}
         {!loading && tasks.length === 0 && viewMode === 'list' && <div className="text-center py-16 text-gray-400">No tasks. <button onClick={openNew} className="text-blue-500 hover:underline">Add one.</button></div>}
 
@@ -205,9 +223,15 @@ function TasksPageInner() {
                     <div key={ds} className={`bg-white min-h-[72px] p-1 ${isToday ? 'ring-2 ring-inset ring-blue-400' : ''}`}>
                       <p className={`text-xs font-semibold w-5 h-5 flex items-center justify-center rounded-full mb-0.5 ${isToday ? 'bg-blue-600 text-white' : hasOverdue ? 'text-red-500' : 'text-gray-600'}`}>{day}</p>
                       {dt.slice(0, 3).map(t => (
-                        <div key={t.id} title={t.title} className={`text-xs px-1 rounded mb-0.5 truncate leading-5 ${t.status === 'completed' ? 'bg-gray-50 text-gray-400 line-through' : hasOverdue ? 'bg-red-50 text-red-700' : isToday ? 'bg-blue-50 text-blue-700' : 'bg-gray-50 text-gray-700'}`}>
+                        <button
+                          key={t.id}
+                          type="button"
+                          title={t.title}
+                          onClick={() => openEdit(t)}
+                          className={`w-full text-left text-xs px-1 rounded mb-0.5 truncate leading-5 hover:ring-1 hover:ring-blue-300 ${t.status === 'completed' ? 'bg-gray-50 text-gray-400 line-through' : hasOverdue ? 'bg-red-50 text-red-700' : isToday ? 'bg-blue-50 text-blue-700' : 'bg-gray-50 text-gray-700'}`}
+                        >
                           {t.title}
-                        </div>
+                        </button>
                       ))}
                       {dt.length > 3 && <p className="text-xs text-gray-400 mt-0.5">+{dt.length - 3} more</p>}
                     </div>

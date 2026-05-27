@@ -6,9 +6,16 @@ export async function GET(req: NextRequest) {
     const sql = getDb();
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status');
+    const leadIdParam = searchParams.get('leadId');
+    const leadId = leadIdParam ? Number(leadIdParam) : null;
+    const hasLeadFilter = Number.isFinite(leadId);
     let tasks;
-    if (status) {
+    if (status && hasLeadFilter) {
+      tasks = await sql`SELECT t.*, l.business_name as lead_name FROM tasks t LEFT JOIN leads l ON t.lead_id = l.id WHERE t.status = ${status} AND t.lead_id = ${leadId} ORDER BY t.due_date ASC, t.priority DESC`;
+    } else if (status) {
       tasks = await sql`SELECT t.*, l.business_name as lead_name FROM tasks t LEFT JOIN leads l ON t.lead_id = l.id WHERE t.status = ${status} ORDER BY t.due_date ASC, t.priority DESC`;
+    } else if (hasLeadFilter) {
+      tasks = await sql`SELECT t.*, l.business_name as lead_name FROM tasks t LEFT JOIN leads l ON t.lead_id = l.id WHERE t.lead_id = ${leadId} ORDER BY t.due_date ASC, t.priority DESC`;
     } else {
       tasks = await sql`SELECT t.*, l.business_name as lead_name FROM tasks t LEFT JOIN leads l ON t.lead_id = l.id ORDER BY t.due_date ASC, t.priority DESC`;
     }

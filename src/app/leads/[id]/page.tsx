@@ -596,7 +596,10 @@ export default function LeadDetailPage() {
 
             {/* Tasks */}
             <Section title="Tasks">
-              <div className="flex justify-end mb-3">
+              <div className="flex items-center justify-between mb-3">
+                <Link href="/tasks" className="text-xs text-blue-600 hover:underline font-medium">
+                  View all tasks
+                </Link>
                 <button onClick={() => { setNewTask({ title: '', taskType: 'Follow up', priority: 'Normal', dueDate: '' }); setShowAddTaskModal(true); }} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg text-xs font-medium hover:bg-blue-100">
                   <Plus size={12} /> Add Task
                 </button>
